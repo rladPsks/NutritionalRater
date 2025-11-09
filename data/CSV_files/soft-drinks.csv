@@ -1,0 +1,22 @@
+product_name,code,categories_tags,additives_n,additives,additives_tags,energy_kcal_100g,fat_100g,saturated_fat_100g,sugars_100g,fiber_100g,proteins_100g,salt_100g
+Coca Cola,5942321000060,"['en:beverages-and-beverages-preparations', 'en:beverages', 'en:sweetened-beverages', 'en:soft-drinks']",3,[],"['en:e150d', 'en:e290', 'en:e338']",42,0,0.0,10.6,0,0,0
+Coca cola,5942321000053,['en:soft-drinks'],3,[],"['en:e150d', 'en:e290', 'en:e338']",42,0,0.0,10.6,0,0,0
+Pepsi Twist,5942204005601,"['en:beverages-and-beverages-preparations', 'en:beverages', 'en:carbonated-drinks', 'en:sodas', 'en:colas', 'en:soft-drinks']",5,[],"['en:e150', 'en:e290', 'en:e338', 'en:e950', 'en:e955']",70,0,0.0,7,0,0,0.01
+Pepsi,5942204005649,"['en:beverages-and-beverages-preparations', 'en:beverages', 'en:sweetened-beverages', 'en:soft-drinks']",4,[],"['en:e290', 'en:e338', 'en:e950', 'en:e955']",28,0,0.0,7,0,0,0.01
+Schweppes,5942321000343,"['en:beverages-and-beverages-preparations', 'en:beverages', 'en:carbonated-drinks', 'en:sodas', 'en:tonic-water', 'en:sweetened-beverages', 'en:soft-drinks']",2,[],"['en:e202', 'en:e290']",37,0,0.0,8.9,0,0,0
+Coca Cola Zero,59492702,['en:soft-drinks'],7,[],"['en:e150d', 'en:e290', 'en:e331', 'en:e338', 'en:e950', 'en:e951', 'en:e952']",0.2,0,0.0,0,0,0,0
+Pepsi Twist,5942204005809,['en:soft-drinks'],5,[],"['en:e150', 'en:e211', 'en:e290', 'en:e331', 'en:e338']",44,0,0.0,11,0,0,0.03
+Fuzetea lamaie 0.5,59492733,"['en:beverages-and-beverages-preparations', 'en:beverages', 'en:carbonated-drinks', 'en:sodas', 'en:soft-drinks']",4,[],"['en:e211', 'en:e300', 'en:e330', 'en:e960a']",48,0,0.0,4.4,0,0,0.03
+Coca Cola Lămâie Verde,5942321003009,['en:soft-drinks'],1,[],['en:e150d'],43,0,0.0,10.6,0,0,0.01
+7 up zero sugar,4062139008698,['en:soft-drinks'],6,[],"['en:e211', 'en:e296', 'en:e330', 'en:e331', 'en:e950', 'en:e951']",1,0,0.0,0,0,0,0.04
+Aprikose,9006900014889,['en:soft-drinks'],1,[],['en:e330'],47,0.5,0.1,11,0,0.5,0.01
+Jus de mandarine,0090478000886,['en:soft-drinks'],4,[],"['en:e110', 'en:e129', 'en:e202', 'en:e330']",40,0,0.0,10,,0,0
+,0706502568412,['en:soft-drinks'],0,[],[],24,0,0.0,5.2,,0,0
+Coca-Cola Zero Sugar Kofeiiniton,6415600567220,['en:soft-drinks'],1,[],['en:e150d'],0.3,0,0.0,0,0,0,0.01
+Black,8902080001293,"['en:beverages-and-beverages-preparations', 'en:beverages', 'en:carbonated-drinks', 'en:artificially-sweetened-beverages', 'en:sodas', 'en:diet-beverages', 'en:colas', 'en:diet-sodas', 'en:diet-cola-soft-drink', 'en:soft-drinks']",7,[],"['en:e150d', 'en:e211', 'en:e330', 'en:e338', 'en:e436', 'en:e950', 'en:e955']",0,0,0.0,0,0,0,0.006
+JARRITOS GUAVA,0090478001401,['en:soft-drinks'],1,[],['en:e202'],0,0,0.0,9.46,,0,0.00676
+Root Beer,0049000069648,"['en:beverages', 'en:carbonated-drinks', 'en:sodas', 'en:colas', 'en:soft-drinks']",2,[],"['en:e150c', 'en:e330']",38.24,0,0.0,9.41,,0,0
+Mountain Dew Zero Sugar Spark,0012000211799,"['en:plant-based-foods-and-beverages', 'en:beverages', 'en:plant-based-beverages', 'en:carbonated-drinks', 'en:fruit-based-beverages', 'en:artificially-sweetened-beverages', 'en:sodas', 'en:diet-beverages', 'en:fruit-sodas', 'en:diet-sodas', 'en:soft-drinks']",8,[],"['en:e129', 'en:e211', 'en:e330', 'en:e385', 'en:e414', 'en:e950', 'en:e951', 'en:e955']",0,0,0.0,0,,0,0.031700677971832
+Zero Sugar Dr Pepper,0078000038675,['en:soft-drinks'],5,[],"['en:e150c', 'en:e211', 'en:e338', 'en:e950', 'en:e951']",0,0,0.0,0,,0,0.0452
+Pepsi Max,5942204005694,['en:soft-drinks'],6,[],"['en:e290', 'en:e330', 'en:e331', 'en:e338', 'en:e950', 'en:e951']",1,0,0.0,0,0,0,0.01
+Coca Cola,5942321002248,['en:soft-drinks'],3,[],"['en:e150d', 'en:e290', 'en:e338']",105,0,0.0,10.6,0,0,0
