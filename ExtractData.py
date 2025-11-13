@@ -44,26 +44,26 @@ for category in categories:
         try:
             res = requests.get(url, headers=headers, timeout=10)
         except requests.exceptions.RequestException as e:
-            print(f"  ❌ Request error on page {page}: {e}")
+            print(f"Request error on page {page}: {e}")
             break
 
         if res.status_code != 200 or not res.text.strip():
-            print(f"  ❌ Bad response on page {page}. Status: {res.status_code}")
+            print(f"Bad response on page {page}. Status: {res.status_code}")
             break
 
         try:
             data = res.json()
         except ValueError:
-            print(f"  ❌ Failed to parse JSON on page {page}. HTML/invalid JSON received.")
+            print(f"Failed to parse JSON on page {page}. HTML/invalid JSON received.")
             break
 
         products = data.get("products", [])
         if not products:
-            print(f"  ✅ No more products found on page {page}.")
+            print(f"No more products found on page {page}.")
             break
 
         all_products.extend(products)
-        print(f"  ✔️ Retrieved {len(products)} products (total: {len(all_products)})")
+        print(f"Retrieved {len(products)} products (total: {len(all_products)})")
         time.sleep(delay_seconds)
 
     # Save results to JSON
@@ -71,4 +71,4 @@ for category in categories:
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump({"products": all_products}, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ Saved {len(all_products)} products to {output_path}")
+    print(f"Saved {len(all_products)} products to {output_path}")
