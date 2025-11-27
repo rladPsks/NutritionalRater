@@ -106,9 +106,22 @@ def score_nutrition(row, verbose=False):
     """Compute Q_nutri ∈ [0,100] with optional user-friendly explanation."""
     log = [] if verbose else None
 
-    tags = (str(row.get('categories_tags') or '') + ' ' +
-            str(row.get('source_category') or '')).lower()
-    is_bev = any(k in tags for k in ["beverage", "drink", "juice", "soda"])
+    # Detect beverage or bread classification from category tags
+    tags_raw = (str(row.get('categories_tags') or '') + ' ' +
+                str(row.get('source_category') or '')).lower()
+
+    
+    for sep in [",", ";", "|", ">", "/"]:
+        tags_raw = tags_raw.replace(sep, " ")
+    tokens = [t.strip() for t in tags_raw.split() if t.strip()]
+
+    bev_tokens = {"beverages", "beverage", "soft-drinks", "juices", "sodas", "drinks"}
+    bread_tokens = {"bread", "breads", "bakery", "baked-goods"}
+
+    is_bev = any(t in bev_tokens for t in tokens)
+    # Override beverage detection for bread/bakery items
+    if any(t in bread_tokens for t in tokens):
+        is_bev = False
 
     A = _neg_points(row, is_beverage=is_bev, log=log)
     C = _pos_points(row, is_beverage=is_bev, log=log)
@@ -126,7 +139,6 @@ def score_nutrition(row, verbose=False):
         print("\n".join(log))
 
     return q
-
 
 # ---------- Additives score (dictionary-based) ----------
 
@@ -278,8 +290,14 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 # ---------- Local testing ----------
 
 if __name__ == "__main__":
-    df = pd.read_csv("merged_products.csv")
+    from recommend_alternatives import recommend_alternatives
+
+    df = pd.read_csv("data/merged_products.csv")
     scored = score_dataframe(df)
 
     example = scored.iloc[0]
     health_score(example, verbose=True)
+
+    print("\n=== Healthier alternatives in the same category ===")
+    alts = recommend_alternatives(scored, example["product_name"], top_k=5)
+    print(alts)
