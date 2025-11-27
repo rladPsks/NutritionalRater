@@ -1,10 +1,16 @@
 # visualize_k.py
 """
-Functions
-1) Evaluate different KMeans cluster counts (k) per product category
-   using inertia (elbow) and silhouette scores.
-2) Visualize the currently trained KMeans clusters and their centers
+Utilities for KMeans model selection and visualization.
+
+1) For each source_category, evaluate different numbers of clusters k
+   using inertia (elbow) and silhouette scores, and write
+   reports/figures/k_selection_summary.csv.
+
+2) Visualize the *currently trained* KMeans models (whatever k they use)
    in 2D using PCA.
+
+3) Plot cluster size distributions for each category using the
+   currently trained KMeans models.
 """
 
 import argparse
@@ -22,8 +28,13 @@ from sklearn.metrics import silhouette_score
 
 # Nutritional features used for clustering and visualization
 FEATURES = [
-    "energy_kcal_100g", "fat_100g", "saturated_fat_100g",
-    "sugars_100g", "fiber_100g", "proteins_100g", "salt_100g"
+    "energy_kcal_100g",
+    "fat_100g",
+    "saturated_fat_100g",
+    "sugars_100g",
+    "fiber_100g",
+    "proteins_100g",
+    "salt_100g",
 ]
 
 
@@ -47,7 +58,7 @@ def evaluate_k(X_scaled: np.ndarray, k_min: int, k_max: int) -> pd.DataFrame:
 
     Returns a DataFrame with columns:
         - k: number of clusters
-        - inertia: within-cluster sum of squares (lower is better, but looking for slowed down decrease)
+        - inertia: within-cluster sum of squares
         - silhouette: silhouette score (higher is better)
     """
     results = []
@@ -150,7 +161,7 @@ def plot_trained_clusters(
     out_dir: str | Path = "reports/cluster_plots",
 ) -> None:
     """
-    Visualize the currently trained (k=8) KMeans clusters per category.
+    Visualize the currently trained KMeans clusters per category.
 
     For each source_category:
         - Load the saved scaler and kmeans model
@@ -221,8 +232,83 @@ def plot_trained_clusters(
         print(f"[plot_trained_clusters] Saved cluster plot for '{cat}' → {out_path}")
 
 
-def main() -> None:
+def plot_trained_cluster_sizes(
+    df: pd.DataFrame,
+    models_dir: str | Path = "models",
+    out_dir: str | Path = "reports/cluster_sizes",
+) -> None:
+    """
+    Plot the cluster size distribution for each source_category, using the
+    *currently trained* KMeans models.
 
+    For each source_category:
+        - Load scaler_{category}.pkl and kmeans_{category}.pkl
+        - Scale that category's rows using the scaler
+        - Predict cluster labels with the trained KMeans
+        - Count how many samples fall into each cluster
+        - Plot a bar chart with one bar per cluster
+
+    The plots are saved as:
+        reports/cluster_sizes/<category>_cluster_sizes.png
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    if "source_category" not in df.columns:
+        raise ValueError("CSV must contain a 'source_category' column.")
+
+    for cat, g in df.groupby("source_category"):
+        scaler_path = Path(models_dir) / f"scaler_{cat}.pkl"
+        kmeans_path = Path(models_dir) / f"kmeans_{cat}.pkl"
+
+        if not scaler_path.exists() or not kmeans_path.exists():
+            print(f"[plot_trained_cluster_sizes] No model found for '{cat}', skipping.")
+            continue
+
+        # Keep only rows with all nutritional features present
+        g2 = g.dropna(subset=FEATURES).copy()
+        if len(g2) < 3:
+            print(f"[plot_trained_cluster_sizes] Not enough data for '{cat}', skipping.")
+            continue
+
+        # Load trained scaler & model
+        scaler = joblib.load(scaler_path)
+        kmeans = joblib.load(kmeans_path)
+
+        # Scale using the trained scaler
+        X = g2[FEATURES].values
+        X_scaled = scaler.transform(X)
+
+        # Predict clusters with the current trained model
+        labels = kmeans.predict(X_scaled)
+        n_clusters = kmeans.n_clusters
+
+        # Count elements per cluster
+        counts = np.bincount(labels, minlength=n_clusters)
+        cluster_ids = np.arange(n_clusters)
+
+        # Colors consistent within category
+        cmap = plt.get_cmap("tab10", n_clusters)
+        colors = [cmap(i) for i in cluster_ids]
+
+        plt.figure()
+        plt.bar(cluster_ids, counts, color=colors)
+        plt.xticks(cluster_ids, [f"C{i}" for i in cluster_ids])
+        plt.xlabel("Cluster ID")
+        plt.ylabel("Number of products")
+        plt.title(f"Cluster sizes for '{cat}' (k={n_clusters})")
+        plt.tight_layout()
+
+        out_path = out_dir / f"{cat}_cluster_sizes.png"
+        plt.savefig(out_path, dpi=160)
+        plt.close()
+
+        print(
+            f"[plot_trained_cluster_sizes] Saved cluster size plot for '{cat}' → {out_path}"
+        )
+
+
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--csv",
@@ -297,6 +383,10 @@ def main() -> None:
     # Also show what the currently trained models look like in 2D
     print("\nNow plotting trained clusters with current k values...")
     plot_trained_clusters(df, models_dir="models", out_dir="reports/cluster_plots")
+
+    # And plot cluster size distributions using the same trained models
+    print("Now plotting cluster size distributions with current k values...")
+    plot_trained_cluster_sizes(df, models_dir="models", out_dir="reports/cluster_sizes")
 
 
 if __name__ == "__main__":
