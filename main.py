@@ -73,11 +73,20 @@ def main():
     if product['additives_n'] > 0:
         print(f"Additives tags:    {product['additives_tags']}")
 
-    # --- Step 5: TODO placeholder for alternatives ---
+    # --- Step 5: Healthier Alternatives ---
     print("\n=== Healthier Alternatives ===")
     # TODO: integrate recommend_alternatives() once implemented.\n")
-    
+    from recommend_alternatives import recommend_alternatives
+    try:
+        alternatives = recommend_alternatives(df, product["product_name"], top_k=5)
 
+        if alternatives.empty:
+            print("No healthier alternatives found in this category.\n")
+        else:
+            print(alternatives.to_string(index=False))
+    except Exception as e:
+        print(f"Could not compute alternatives: {e}")
+    
     print("Done.\n")
 
 
