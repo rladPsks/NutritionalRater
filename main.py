@@ -1,49 +1,85 @@
 import pandas as pd
-import utils
+from pathlib import Path
+
 from Constants import CSV_FILE_NAME
+import utils
 
-# This function is now in utils
-"""
-# Read the CSV indexing by barcode strings
-df = pd.read_csv(CSV_FILE_NAME, dtype={"code": "string"})
-# Index by code without droping the column in the CSV
-df = df.set_index("code", drop=False)
-# Make sure that there are no duplicate codes
-assert df.index.is_unique, "Duplicate barcodes found in the dataset"
-"""
-df = utils.read_csv(CSV_FILE_NAME)
+from TrainKMeans import train_models_with_best_k   # Must be implemented in TrainKMeans
+from score_products import score_dataframe
 
-if __name__ == "__main__":
-    # Ask the user to input the barcode
+
+def ensure_models_are_up_to_date():
+    """
+    Checks and loads the best-k summary, then retrains the KMeans models.
+    This is executed once at startup before the user interacts with the system.
+    """
+    summary_path = Path("reports/figures/k_selection_summary.csv")
+
+    if not summary_path.exists():
+        print("[INFO] No k-selection summary found. Please run visualize_k.py first.\n")
+        return
+
+    print("[INFO] Updating clustering models based on best-k values...")
+    train_models_with_best_k()
+    print("[INFO] Models retrained successfully.\n")
+
+
+def load_final_dataframe():
+    """
+    Loads the merged + rated + clustered CSV.
+    If 'rating' is missing, compute all scores.
+    """
+    df = utils.read_csv(CSV_FILE_NAME)
+
+    if "rating" not in df.columns:
+        print("[INFO] No rating found – computing nutritional scores for all products...")
+        df = score_dataframe(df)
+        df.to_csv(CSV_FILE_NAME, index=False)
+        print("[INFO] Ratings saved.\n")
+
+    return df
+
+
+def main():
+
+    # --- Step 0: Ensure models are up to date before showing menu ---
+    ensure_models_are_up_to_date()
+
+    # --- Step 1: Banner ---
+    print("===================================")
+    print("   Nutritional Rater — Main Menu   ")
+    print("===================================\n")
+
+    # --- Step 2: Load data ---
+    df = load_final_dataframe()
+    df = df.set_index("code", drop=False)
+
+    # --- Step 3: Get user input ---
     print("Input the barcode of the product you want to scan:")
-
-
-    # Read the barcode
     barcode = input().strip()
 
-    # If the barcode is in in the database
-    if barcode in df.index:
+    if barcode not in df.index:
+        print("\nSorry! Your product is not in the database.\n")
+        return
 
-        # Locate the product
-        product = df.loc[barcode]
+    product = df.loc[barcode]
 
-        # Print the product's info
-        print("\nProduct info:")
-        print(f"    Name: {product['product_name']}")
-        print(f"    Category: {product['source_category']}")
-        print(f"    Number of additives: {product['additives_n']}")
+    # --- Step 4: Show product info ---
+    print("\n=== Product Information ===")
+    print(f"Name:              {product['product_name']}")
+    print(f"Category:          {product['source_category']}")
+    print(f"Rating (0–100):    {product['rating']}")
+    print(f"Additives count:   {product['additives_n']}")
+    if product['additives_n'] > 0:
+        print(f"Additives tags:    {product['additives_tags']}")
 
-        if product['additives_n'] > 0:
-            print(f"    Additives tags: {product['additives_tags']}")
-        
+    # --- Step 5: TODO placeholder for alternatives ---
+    print("\n=== Healthier Alternatives ===")
+    # TODO: integrate recommend_alternatives() once implemented.\n")
+    
 
-        # TODO: Here we could call the formula function, which function should output depending on the category/categories
-        # We are analyzing if the amount of x nutrient is rated as bad, could be better or good
+    print("Done.\n")
 
-        print(f"    Final rating: {product['rating']}\n")
 
-        # TODO: Apply the already trained K-Means
-        
-
-    else:
-        print("Sorry! Your product is not in the database")
+if __name__ == "__main__":
+    main()

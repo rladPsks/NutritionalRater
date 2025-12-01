@@ -60,29 +60,111 @@ def evaluate_k(X_scaled: np.ndarray, k_min: int, k_max: int) -> pd.DataFrame:
         - k: number of clusters
         - inertia: within-cluster sum of squares
         - silhouette: silhouette score (higher is better)
+        - min_cluster_size: size of the smallest cluster for this k
     """
     results = []
+    n_samples = X_scaled.shape[0]
+
     for k in range(k_min, k_max + 1):
         # Not enough samples to form k clusters
-        if X_scaled.shape[0] <= k:
-            results.append({"k": k, "inertia": np.nan, "silhouette": np.nan})
+        if n_samples <= k:
+            results.append(
+                {
+                    "k": k,
+                    "inertia": np.nan,
+                    "silhouette": np.nan,
+                    "min_cluster_size": np.nan,
+                }
+            )
             continue
 
         km = KMeans(n_clusters=k, n_init="auto", random_state=42)
         labels = km.fit_predict(X_scaled)
         inertia = km.inertia_
 
-        # Silhouette requires at least 2 clusters and more samples than k
+        # Cluster-size diagnostics
+        counts = np.bincount(labels)
+        min_cluster_size = int(counts.min())
+
+        # Silhouette: requires at least 2 clusters and > k samples
         sil = np.nan
-        if len(set(labels)) > 1 and X_scaled.shape[0] > k:
+        if len(set(labels)) > 1 and n_samples > k:
             sil = silhouette_score(X_scaled, labels)
 
-        results.append({"k": k, "inertia": inertia, "silhouette": sil})
+        results.append(
+            {
+                "k": k,
+                "inertia": inertia,
+                "silhouette": sil,
+                "min_cluster_size": min_cluster_size,
+            }
+        )
 
     return pd.DataFrame(results)
 
 
 def pick_best_k(scores_df: pd.DataFrame) -> tuple[int | None, dict]:
+    """
+    Choose the 'best' k, with this rule:
+
+    1) Try to use the k with highest silhouette score.
+       BUT if that silhouette-best k has a cluster of size 1,
+       we consider that an 'outlier cluster' and **do not** trust silhouette
+       for this category.
+
+    2) In that case (or if no silhouette is available), fall back to an
+       elbow heuristic on inertia: pick the k with the largest positive
+       drop in inertia compared to k-1.
+
+    Returns:
+        best_k: int or None
+        info: dict with keys:
+              - 'criterion': 'silhouette', 'elbow_delta', or 'none'
+              - 'value'    : silhouette value or inertia-drop value
+    """
+    # --- 1) Try silhouette first ---
+    if scores_df["silhouette"].notna().any():
+        s = scores_df.dropna(subset=["silhouette"]).sort_values(
+            "silhouette", ascending=False
+        )
+
+        if not s.empty:
+            best_row = s.iloc[0]
+            best_k = int(best_row["k"])
+            min_cluster_size = best_row.get("min_cluster_size", np.nan)
+
+            # If the best-silhouette solution has a 1-point cluster,
+            # we treat this as an outlier cluster and DO NOT trust silhouette
+            if not (pd.notna(min_cluster_size) and min_cluster_size <= 1):
+                # Safe to use silhouette
+                return best_k, {
+                    "criterion": "silhouette",
+                    "value": float(best_row["silhouette"]),
+                }
+
+            # Otherwise, log/debug info (optional print)
+            print(
+                f"[pick_best_k] Best silhouette k={best_k} has a 1-item cluster "
+                f"(min_cluster_size={min_cluster_size}). Falling back to elbow."
+            )
+
+    # --- 2) Fallback: elbow on inertia (largest inertia drop) ---
+    d = scores_df.dropna(subset=["inertia"]).copy()
+    d["delta"] = d["inertia"].shift(1) - d["inertia"]
+    d = d.dropna(subset=["delta"])
+
+    if not d.empty and (d["delta"] > 0).any():
+        d_pos = d[d["delta"] > 0].sort_values("delta", ascending=False)
+        best_row = d_pos.iloc[0]
+        return int(best_row["k"]), {
+            "criterion": "elbow_delta",
+            "value": float(best_row["delta"]),
+        }
+
+    # --- 3) Nothing usable ---
+    return None, {"criterion": "none", "value": None}
+
+def pick_best_k_silhuette(scores_df: pd.DataFrame) -> tuple[int | None, dict]:
     """
     Given a scores DataFrame from evaluate_k(), choose the "best" k.
 
@@ -121,6 +203,44 @@ def pick_best_k(scores_df: pd.DataFrame) -> tuple[int | None, dict]:
     return None, {"criterion": "none", "value": None}
 
 
+def pick_best_k_elbow(scores_df: pd.DataFrame) -> tuple[int | None, dict]:
+    """
+    Choose the best k using the *elbow* (inertia drop) as the main criterion.
+
+    Strategy:
+        1) Compute the drop in inertia between k-1 and k.
+        2) Pick the k with the largest positive drop ("strongest elbow").
+        3) If no inertia info is available, fall back to the best silhouette k.
+        4) If nothing is usable, return (None, info).
+    """
+    # 1) Elbow: look at inertia drop
+    d = scores_df.dropna(subset=["inertia"]).copy()
+    d["delta"] = d["inertia"].shift(1) - d["inertia"]  # drop when increasing k
+    d = d.dropna(subset=["delta"])
+
+    if not d.empty and (d["delta"] > 0).any():
+        d_pos = d[d["delta"] > 0].sort_values("delta", ascending=False)
+        best_row = d_pos.iloc[0]
+        return int(best_row["k"]), {
+            "criterion": "elbow_delta",
+            "value": float(best_row["delta"]),
+        }
+
+    # 2) Fallback: use the best silhouette if available
+    if scores_df["silhouette"].notna().any():
+        s = scores_df.dropna(subset=["silhouette"]).sort_values(
+            "silhouette", ascending=False
+        )
+        best_row = s.iloc[0]
+        return int(best_row["k"]), {
+            "criterion": "silhouette_fallback",
+            "value": float(best_row["silhouette"]),
+        }
+
+    # 3) Nothing usable
+    return None, {"criterion": "none", "value": None}
+
+
 def plot_lines(cat: str, scores_df: pd.DataFrame, out_dir: str | Path) -> None:
     """
     For a single category, plot:
@@ -153,6 +273,17 @@ def plot_lines(cat: str, scores_df: pd.DataFrame, out_dir: str | Path) -> None:
     plt.tight_layout()
     plt.savefig(out_dir / f"{cat}_silhouette.png", dpi=160)
     plt.close()
+
+
+def get_cluster_palette(n_clusters: int):
+    """
+    Return a list of RGBA colors, one per cluster ID, using a fixed colormap.
+
+    Using this helper in all plots ensures that cluster 0, 1, 2, ...
+    always get the same colors across different visualizations.
+    """
+    cmap = plt.get_cmap("tab10")  # categorical palette
+    return [cmap(i % cmap.N) for i in range(n_clusters)]
 
 
 def plot_trained_clusters(
@@ -201,6 +332,8 @@ def plot_trained_clusters(
 
         # Predict clusters with the current trained model
         labels = kmeans.predict(X_scaled)
+        n_clusters = kmeans.n_clusters
+        palette = get_cluster_palette(n_clusters)
 
         # PCA to 2D for visualization (fit on scaled data)
         pca = PCA(n_components=2, random_state=42)
@@ -210,19 +343,33 @@ def plot_trained_clusters(
         centers_scaled = kmeans.cluster_centers_
         centers_2d = pca.transform(centers_scaled)
 
-        # Plot data points and cluster centers
+        # Plot data points cluster by cluster so colors match cluster IDs
         plt.figure()
-        plt.scatter(X_2d[:, 0], X_2d[:, 1], c=labels, alpha=0.6)
+        for cid in range(n_clusters):
+            mask = (labels == cid)
+            plt.scatter(
+                X_2d[mask, 0],
+                X_2d[mask, 1],
+                s=20,
+                alpha=0.6,
+                color=palette[cid],
+                label=f"C{cid}",
+            )
+
+        # Plot cluster centers
         plt.scatter(
             centers_2d[:, 0],
             centers_2d[:, 1],
             marker="X",
             s=160,
             edgecolor="black",
+            facecolor="none",
         )
-        plt.title(f"Clusters for '{cat}' (k={kmeans.n_clusters})")
+
+        plt.title(f"Clusters for '{cat}' (k={n_clusters})")
         plt.xlabel("PC1")
         plt.ylabel("PC2")
+        plt.legend(loc="best", fontsize=8)
         plt.tight_layout()
 
         out_path = out_dir / f"{cat}_clusters.png"
@@ -287,16 +434,28 @@ def plot_trained_cluster_sizes(
         counts = np.bincount(labels, minlength=n_clusters)
         cluster_ids = np.arange(n_clusters)
 
-        # Colors consistent within category
-        cmap = plt.get_cmap("tab10", n_clusters)
-        colors = [cmap(i) for i in cluster_ids]
+        # Same palette as the PCA plot
+        palette = get_cluster_palette(n_clusters)
 
         plt.figure()
-        plt.bar(cluster_ids, counts, color=colors)
+        bars = plt.bar(cluster_ids, counts, color=palette)
         plt.xticks(cluster_ids, [f"C{i}" for i in cluster_ids])
         plt.xlabel("Cluster ID")
         plt.ylabel("Number of products")
         plt.title(f"Cluster sizes for '{cat}' (k={n_clusters})")
+
+        # Add exact counts above each bar
+        for bar, count in zip(bars, counts):
+            height = bar.get_height()
+            plt.text(
+                bar.get_x() + bar.get_width() / 2,
+                height,
+                str(int(count)),
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
         plt.tight_layout()
 
         out_path = out_dir / f"{cat}_cluster_sizes.png"

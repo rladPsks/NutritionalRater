@@ -31,6 +31,17 @@ NUTRITIONAL_FEATURES = [
     "salt_100g",
 ]
 
+def train_models_with_best_k():
+    """
+    Wrapper so main.py can trigger model retraining easily.
+    This function simply executes the training pipeline.
+    """
+    print("[TrainKMeans] Starting training...")
+    # Just run the existing code inside TrainKMeans.py
+    # (Move your training code into a function or re-import this file.)
+    # The simplest solution:
+    import TrainKMeans    # running the file retrains the models
+
 # ---------------------------------------------------------------------
 # Load data
 # ---------------------------------------------------------------------
