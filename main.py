@@ -75,7 +75,6 @@ def main():
 
     # --- Step 5: Healthier Alternatives ---
     print("\n=== Healthier Alternatives ===")
-    # TODO: integrate recommend_alternatives() once implemented.\n")
     from recommend_alternatives import recommend_alternatives
     try:
         alternatives = recommend_alternatives(df, product["product_name"], top_k=5)
