@@ -1,0 +1,11 @@
+source_category,best_k,criterion,value
+breads,3,silhouette,0.3361217480975359
+breakfast-cereals,2,silhouette,0.30315497628830296
+cheeses,6,elbow_delta,513.3665482382988
+ice-creams,3,silhouette,0.33489633629851556
+meals-with-meat,2,silhouette,0.3499528566894743
+microwave-meals,4,elbow_delta,577.8104690462725
+plant-based-foods,3,elbow_delta,509.7126740291768
+snacks,2,silhouette,0.3724390989377758
+soft-drinks,3,elbow_delta,21.770341860305322
+yogurts,3,silhouette,0.4182808075136468

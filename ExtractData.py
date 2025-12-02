@@ -34,7 +34,7 @@ headers = {
 }
 
 for category in categories:
-    print(f"\n🔍 Downloading category: {category}")
+    print(f"\nDownloading category: {category}")
     all_products = []
 
     for page in range(1, max_pages + 1):

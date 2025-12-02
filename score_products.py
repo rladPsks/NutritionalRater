@@ -280,10 +280,16 @@ def health_score(row, verbose=False):
 
 def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
+    """
     out["Q_nutri"] = out.apply(lambda r: score_nutrition(r, verbose=False), axis=1)
     out["Q_add"]   = out.apply(lambda r: score_additives(r, verbose=False), axis=1)
     out["health_score"] = out.apply(lambda r: health_score(r, verbose=False), axis=1)
+    
     out["rating"] = out["health_score"]
+    """
+
+    out["rating"] = out.apply(lambda r: health_score(r, verbose=False), axis=1)
+
     return out
 
 
@@ -294,6 +300,8 @@ if __name__ == "__main__":
 
     df = pd.read_csv("data/merged_products.csv")
     scored = score_dataframe(df)
+
+    scored.to_csv("./data/merged_products_rated.csv", index=False)
 
     example = scored.iloc[0]
     health_score(example, verbose=True)

@@ -1,1 +1,1 @@
-CSV_FILE_NAME = "./data/merged_products_randomized.csv"
+CSV_FILE_NAME = "./data/merged_products_rated.csv"

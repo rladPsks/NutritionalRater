@@ -5,7 +5,7 @@ from Constants import CSV_FILE_NAME
 import utils
 
 from TrainKMeans import train_models_with_best_k   # Must be implemented in TrainKMeans
-from score_products import score_dataframe
+from score_products import score_dataframe, health_score
 
 
 def ensure_models_are_up_to_date():
@@ -64,6 +64,7 @@ def main():
 
     product = df.loc[barcode]
 
+    """
     # --- Step 4: Show product info ---
     print("\n=== Product Information ===")
     print(f"Name:              {product['product_name']}")
@@ -72,6 +73,10 @@ def main():
     print(f"Additives count:   {product['additives_n']}")
     if product['additives_n'] > 0:
         print(f"Additives tags:    {product['additives_tags']}")
+    """
+        
+    # --- Step 4: Show verbose product info ---
+    health_score(product, verbose=True)
 
     # --- Step 5: Healthier Alternatives ---
     print("\n=== Healthier Alternatives ===")
