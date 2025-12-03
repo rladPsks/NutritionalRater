@@ -58,5 +58,5 @@ In section 3 there can be found the summarized output information:
 
 ## Appendix
 
-For detailed info about the project and the utilized formulas, check the 'doc' folder within the repo.
+For detailed info about the project, visualization of the k-means clusters and the utilized formulas, check the 'doc' folder within the repo.
 
