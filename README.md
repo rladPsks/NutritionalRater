@@ -220,7 +220,7 @@ and the `doc/` and `reports/` directories.
 
 ## Team
 
-This project was developed collaboratively as an SDSU CS450:Intro to AI course project by:
+This project was developed collaboratively for SDSU CS 450: Introduction to Artificial Intelligence by:
 
 - [@skyscrabble](https://github.com/skyscrabble)
 - [@hannahsteindorfer](https://github.com/hannahsteindorfer)
